@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { MikroORM } from "@mikro-orm/postgresql";
-import config from "./orm.config";
+import config from "../database/orm.config";
 
 const scenarios = [
   {
@@ -45,6 +45,7 @@ test.each(scenarios)(
 
       const walletId = crypto.randomUUID();
       const entryId = crypto.randomUUID();
+      const transactionId = crypto.randomUUID();
 
       await em.execute(
         `INSERT INTO wallets (id, player_id, currency, balance)
@@ -53,12 +54,20 @@ test.each(scenarios)(
       );
 
       await em.execute(
+        `INSERT INTO wager_transactions (
+     id, wallet_id, currency, amount, kind, status, processed_at
+   )
+   VALUES (?, ?, 'BRL', 100.00, 'OPENING', 'PROCESSED', now())`,
+        [transactionId, walletId],
+      );
+
+      await em.execute(
         `INSERT INTO wallet_ledger_entries (
          id, wallet_id, transaction_id, direction, currency,
          amount, balance_before, balance_after
        )
        VALUES (?, ?, ?, 'CREDIT', 'BRL', 100.00, 0.00, 100.00)`,
-        [entryId, walletId, crypto.randomUUID()],
+        [entryId, walletId, transactionId],
       );
 
       await expect(em.execute(sql, [entryId])).rejects.toThrow(error);

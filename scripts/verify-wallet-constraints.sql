@@ -1,6 +1,5 @@
 BEGIN;
 
--- Carteira temporária para esta verificação.
 INSERT INTO wallets (id, player_id, currency, balance)
 VALUES (
   '00000000-0000-4000-8000-000000000001',

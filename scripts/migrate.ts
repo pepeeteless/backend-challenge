@@ -1,5 +1,5 @@
 import { MikroORM } from "@mikro-orm/postgresql";
-import config from "./orm.config";
+import config from "../src/database/orm.config";
 
 async function main(): Promise<void> {
   const direction = process.argv[2];

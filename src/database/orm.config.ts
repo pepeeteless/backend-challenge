@@ -1,8 +1,9 @@
 import { defineConfig } from "@mikro-orm/postgresql";
-import { WalletSchema } from "./wallet.schema";
+import { WalletSchema } from "../wallets/wallet.schema";
 import { Migrator } from "@mikro-orm/migrations";
 import { Migration202610140001 } from "./migrations/Migration202610140001";
 import { Migration202610140002 } from "./migrations/Migration202610140002";
+import { Migration202610150001 } from "./migrations/Migration202610150001";
 
 export default defineConfig({
   host: "127.0.0.1",
@@ -13,7 +14,11 @@ export default defineConfig({
   entities: [WalletSchema],
   extensions: [Migrator],
   migrations: {
-    migrationsList: [Migration202610140001, Migration202610140002],
+    migrationsList: [
+      Migration202610140001,
+      Migration202610140002,
+      Migration202610150001,
+    ],
     transactional: true,
     allOrNothing: true,
   },

@@ -6,7 +6,12 @@
     "start:dev": "bun --watch src/main.ts",
     "typecheck": "tsc --project tsconfig.json",
     "test": "bun test",
-    "services:up": "docker compose up -d"
+    "test:unit": "bun test .unit.test.ts",
+    "test:integration": "bun test .integration.test.ts",
+    "services:up": "docker compose up -d",
+    "migrate:up": "bun run scripts/migrate.ts up",
+    "migrate:down": "bun run scripts/migrate.ts down",
+    "db:check": "bun run scripts/check-connection.ts"
   },
   "dependencies": {
     "@mikro-orm/core": "7.2",
@@ -17,7 +22,8 @@
     "@nestjs/platform-express": "11",
     "decimal.js": "^10.6.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.2"
+    "rxjs": "^7.8.2",
+    "zod": "4"
   },
   "devDependencies": {
     "@types/bun": "^1.4.3",

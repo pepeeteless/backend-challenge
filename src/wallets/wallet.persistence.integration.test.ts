@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { MikroORM } from "@mikro-orm/postgresql";
-import config from "./orm.config";
+import config from "../database/orm.config";
 import { WalletSchema } from "./wallet.schema";
-import { Money } from "../../domain/money";
-import { Wallet } from "../../domain/wallet";
+import { Money } from "./money";
+import { Wallet } from "./wallet";
 
 test("persiste e relê saldo exato como string no PostgreSQL", async () => {
   const orm = await MikroORM.init(config);
