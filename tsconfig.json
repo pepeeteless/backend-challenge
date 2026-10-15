@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "strict": true,
+    "noEmit": true,
+    "types": ["bun"],
+    "lib": ["ES2025", "ESNext.Temporal"]
+  },
+  "include": ["src/**/*.ts"]
+}

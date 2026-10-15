@@ -1,0 +1,27 @@
+{
+  "name": "wagering-processor",
+  "private": true,
+  "scripts": {
+    "start": "bun run src/main.ts",
+    "start:dev": "bun --watch src/main.ts",
+    "typecheck": "tsc --project tsconfig.json",
+    "test": "bun test",
+    "services:up": "docker compose up -d"
+  },
+  "dependencies": {
+    "@mikro-orm/core": "7.2",
+    "@mikro-orm/migrations": "7.2.5",
+    "@mikro-orm/postgresql": "7.2",
+    "@nestjs/common": "11",
+    "@nestjs/core": "11",
+    "@nestjs/platform-express": "11",
+    "decimal.js": "^10.6.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/pg": "^8.23.1",
+    "typescript": "^7.0.2"
+  }
+}
