@@ -33,12 +33,26 @@ export const WagerTransactionSchema = new EntitySchema<WagerTransactionRecord>({
 
   properties: {
     referenceExternalTransactionId: {
-      type: "string", fieldName: "reference_external_transaction_id", length: 200, nullable: true,
+      type: "string",
+      fieldName: "reference_external_transaction_id",
+      length: 200,
+      nullable: true,
     },
-    referenceTransactionId: { type: "uuid", fieldName: "reference_transaction_id", nullable: true },
-    referenceAttempts: { type: "integer", fieldName: "reference_attempts", default: 0 },
+    referenceTransactionId: {
+      type: "uuid",
+      fieldName: "reference_transaction_id",
+      nullable: true,
+    },
+    referenceAttempts: {
+      type: "integer",
+      fieldName: "reference_attempts",
+      default: 0,
+    },
     nextReferenceAttemptAt: {
-      type: Date, columnType: "timestamptz", fieldName: "next_reference_attempt_at", nullable: true,
+      type: Date,
+      columnType: "timestamptz",
+      fieldName: "next_reference_attempt_at",
+      nullable: true,
     },
     id: { type: "uuid", primary: true },
     walletId: { type: "uuid", fieldName: "wallet_id" },

@@ -1,6 +1,10 @@
 import { EntityManager } from "@mikro-orm/postgresql";
 import { Wallet } from "../wallets/wallet";
-import { WagerTransaction, type FailureCode, type TransactionReference } from "./wager-transaction";
+import {
+  WagerTransaction,
+  type FailureCode,
+  type TransactionReference,
+} from "./wager-transaction";
 import { Money } from "../wallets/money";
 import {
   WagerTransactionSchema,
@@ -52,7 +56,8 @@ export class WagerTransactionRepository {
         gameId: identity.gameId,
         failureCode: null,
         response: null,
-        referenceExternalTransactionId: identity.referenceExternalTransactionId ?? null,
+        referenceExternalTransactionId:
+          identity.referenceExternalTransactionId ?? null,
         referenceTransactionId: null,
         referenceAttempts: 0,
         nextReferenceAttemptAt: null,
@@ -115,54 +120,116 @@ export class WagerTransactionRepository {
     return this.em.findOne(WagerTransactionSchema, { id }, { refresh: true });
   }
 
-  findByExternalId(providerId: string, externalTransactionId: string): Promise<WagerTransactionRecord | null> {
-    return this.em.findOne(WagerTransactionSchema, { providerId, externalTransactionId }, { refresh: true });
+  findByExternalId(
+    providerId: string,
+    externalTransactionId: string,
+  ): Promise<WagerTransactionRecord | null> {
+    return this.em.findOne(
+      WagerTransactionSchema,
+      { providerId, externalTransactionId },
+      { refresh: true },
+    );
   }
 
-  async findReference(providerId: string, externalTransactionId: string): Promise<TransactionReference | undefined> {
-    const record = await this.em.findOne(WagerTransactionSchema, {
-      providerId, externalTransactionId,
-    }, { refresh: true });
+  async findReference(
+    providerId: string,
+    externalTransactionId: string,
+  ): Promise<TransactionReference | undefined> {
+    const record = await this.em.findOne(
+      WagerTransactionSchema,
+      {
+        providerId,
+        externalTransactionId,
+      },
+      { refresh: true },
+    );
     if (!record) return undefined;
-    if (!record.providerId || !record.externalTransactionId || !record.playerId || !record.roundId) {
+    if (
+      !record.providerId ||
+      !record.externalTransactionId ||
+      !record.playerId ||
+      !record.roundId
+    ) {
       throw new Error("External transaction has incomplete identity");
     }
     return {
-      id: record.id, providerId: record.providerId, externalTransactionId: record.externalTransactionId,
-      walletId: record.walletId, playerId: record.playerId, roundId: record.roundId,
-      kind: record.kind, status: record.status,
+      id: record.id,
+      providerId: record.providerId,
+      externalTransactionId: record.externalTransactionId,
+      walletId: record.walletId,
+      playerId: record.playerId,
+      roundId: record.roundId,
+      kind: record.kind,
+      status: record.status,
       money: Money.from({ amount: record.amount, currency: record.currency }),
     };
   }
 
-  async hasProcessedReversal(referenceTransactionId: string, kind: "REFUND" | "ROLLBACK"): Promise<boolean> {
-    return await this.em.count(WagerTransactionSchema, {
-      referenceTransactionId, kind, status: "PROCESSED",
-    }) > 0;
+  async hasProcessedReversal(
+    referenceTransactionId: string,
+    kind: "REFUND" | "ROLLBACK",
+  ): Promise<boolean> {
+    return (
+      (await this.em.count(WagerTransactionSchema, {
+        referenceTransactionId,
+        kind,
+        status: "PROCESSED",
+      })) > 0
+    );
   }
 
   findDue(now: Date, limit = 25) {
-    return this.em.find(WagerTransactionSchema, {
-      status: "PENDING_REFERENCE", nextReferenceAttemptAt: { $lte: now },
-    }, { fields: ["id"], orderBy: { nextReferenceAttemptAt: "asc", id: "asc" }, limit });
+    return this.em.find(
+      WagerTransactionSchema,
+      {
+        status: "PENDING_REFERENCE",
+        nextReferenceAttemptAt: { $lte: now },
+      },
+      {
+        fields: ["id"],
+        orderBy: { nextReferenceAttemptAt: "asc", id: "asc" },
+        limit,
+      },
+    );
   }
 
   rehydrate(record: WagerTransactionRecord): WagerTransaction {
-    if (record.kind === "OPENING" || !record.providerId || !record.externalTransactionId
-      || !record.idempotencyKey || !record.payloadHash || !record.playerId || !record.roundId || !record.gameId) {
+    if (
+      record.kind === "OPENING" ||
+      !record.providerId ||
+      !record.externalTransactionId ||
+      !record.idempotencyKey ||
+      !record.payloadHash ||
+      !record.playerId ||
+      !record.roundId ||
+      !record.gameId
+    ) {
       throw new Error("Cannot retry an internal or incomplete transaction");
     }
-    return WagerTransaction.rehydrate({
-      id: record.id, walletId: record.walletId, providerId: record.providerId,
-      externalTransactionId: record.externalTransactionId, idempotencyKey: record.idempotencyKey,
-      payloadHash: record.payloadHash, playerId: record.playerId, roundId: record.roundId,
-      gameId: record.gameId, kind: record.kind,
-      money: Money.from({ amount: record.amount, currency: record.currency }),
-      referenceExternalTransactionId: record.referenceExternalTransactionId ?? undefined,
-    }, {
-      status: record.status, failureCode: (record.failureCode ?? undefined) as FailureCode | undefined,
-      processedAt: record.processedAt ?? undefined,
-      referenceTransactionId: record.referenceTransactionId ?? undefined,
-    });
+    return WagerTransaction.rehydrate(
+      {
+        id: record.id,
+        walletId: record.walletId,
+        providerId: record.providerId,
+        externalTransactionId: record.externalTransactionId,
+        idempotencyKey: record.idempotencyKey,
+        payloadHash: record.payloadHash,
+        playerId: record.playerId,
+        roundId: record.roundId,
+        gameId: record.gameId,
+        kind: record.kind,
+        money: Money.from({ amount: record.amount, currency: record.currency }),
+        referenceExternalTransactionId:
+          record.referenceExternalTransactionId ?? undefined,
+      },
+      {
+        status: record.status,
+        failureCode: (record.failureCode ?? undefined) as
+          | FailureCode
+          | undefined,
+        processedAt: record.processedAt ?? undefined,
+        referenceTransactionId: record.referenceTransactionId ?? undefined,
+      },
+    );
   }
 }

@@ -21,7 +21,14 @@ export default defineConfig({
   password: process.env.DB_PASSWORD ?? "pepe_local",
   dbName: process.env.DB_NAME ?? "pepe",
   driverOptions: { connectionTimeoutMillis: 2500 },
-  entities: [WalletSchema, WagerTransactionSchema, WalletLedgerEntrySchema, InboxSchema, OutboxSchema, DeadLetterSchema],
+  entities: [
+    WalletSchema,
+    WagerTransactionSchema,
+    WalletLedgerEntrySchema,
+    InboxSchema,
+    OutboxSchema,
+    DeadLetterSchema,
+  ],
   extensions: [Migrator],
   migrations: {
     migrationsList: [

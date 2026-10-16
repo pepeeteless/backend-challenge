@@ -20,15 +20,26 @@ export abstract class IntegrationEvent<T> {
   readonly version = 1;
   readonly eventId = crypto.randomUUID();
   readonly data: Readonly<T>;
-  private readonly context: Readonly<Omit<EventContext, "occurredAt"> & { occurredAt: string }>;
+  private readonly context: Readonly<
+    Omit<EventContext, "occurredAt"> & { occurredAt: string }
+  >;
 
   protected constructor(data: T, context: EventContext) {
     this.data = freezeDeep(structuredClone(data));
-    this.context = Object.freeze({ ...context, occurredAt: context.occurredAt.toISOString() });
+    this.context = Object.freeze({
+      ...context,
+      occurredAt: context.occurredAt.toISOString(),
+    });
   }
 
   toJSON() {
-    return { ...this.context, eventId: this.eventId, eventType: this.eventType, version: this.version, data: this.data };
+    return {
+      ...this.context,
+      eventId: this.eventId,
+      eventType: this.eventType,
+      version: this.version,
+      data: this.data,
+    };
   }
 }
 
@@ -43,19 +54,27 @@ export interface TransactionEventData {
 
 export class WagerTransactionProcessed extends IntegrationEvent<TransactionEventData> {
   readonly eventType = "WagerTransactionProcessed";
-  static create(data: TransactionEventData, context: EventContext) { return freezeDeep(new WagerTransactionProcessed(data, context)); }
+  static create(data: TransactionEventData, context: EventContext) {
+    return freezeDeep(new WagerTransactionProcessed(data, context));
+  }
 }
 export class WagerTransactionRejected extends IntegrationEvent<TransactionEventData> {
   readonly eventType = "WagerTransactionRejected";
-  static create(data: TransactionEventData, context: EventContext) { return freezeDeep(new WagerTransactionRejected(data, context)); }
+  static create(data: TransactionEventData, context: EventContext) {
+    return freezeDeep(new WagerTransactionRejected(data, context));
+  }
 }
 export class WagerTransactionFailed extends IntegrationEvent<TransactionEventData> {
   readonly eventType = "WagerTransactionFailed";
-  static create(data: TransactionEventData, context: EventContext) { return freezeDeep(new WagerTransactionFailed(data, context)); }
+  static create(data: TransactionEventData, context: EventContext) {
+    return freezeDeep(new WagerTransactionFailed(data, context));
+  }
 }
 export class WagerTransactionPendingReference extends IntegrationEvent<TransactionEventData> {
   readonly eventType = "WagerTransactionPendingReference";
-  static create(data: TransactionEventData, context: EventContext) { return freezeDeep(new WagerTransactionPendingReference(data, context)); }
+  static create(data: TransactionEventData, context: EventContext) {
+    return freezeDeep(new WagerTransactionPendingReference(data, context));
+  }
 }
 export interface BalanceChangedData {
   walletId: string;
@@ -68,6 +87,7 @@ export interface BalanceChangedData {
 }
 export class WalletBalanceChanged extends IntegrationEvent<BalanceChangedData> {
   readonly eventType = "WalletBalanceChanged";
-  static create(data: BalanceChangedData, context: EventContext) { return freezeDeep(new WalletBalanceChanged(data, context)); }
+  static create(data: BalanceChangedData, context: EventContext) {
+    return freezeDeep(new WalletBalanceChanged(data, context));
+  }
 }
-

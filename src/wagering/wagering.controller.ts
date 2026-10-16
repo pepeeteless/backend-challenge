@@ -32,7 +32,15 @@ export class WageringController {
       const result = await new ProcessTransaction(
         this.database.createEntityManager(),
       ).execute(body, key);
-      response.status(result.status === "FAILED" ? 500 : result.status === "REJECTED" ? 422 : result.status === "PENDING_REFERENCE" ? 202 : 200);
+      response.status(
+        result.status === "FAILED"
+          ? 500
+          : result.status === "REJECTED"
+            ? 422
+            : result.status === "PENDING_REFERENCE"
+              ? 202
+              : 200,
+      );
       return result;
     } catch (error) {
       if (error instanceof WagerRequestError) {

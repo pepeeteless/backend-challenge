@@ -1,9 +1,16 @@
-import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Inject,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ReadinessService } from "./readiness.service";
 
 @Controller("health")
 export class HealthController {
-  constructor(@Inject(ReadinessService) private readonly readiness: ReadinessService) {}
+  constructor(
+    @Inject(ReadinessService) private readonly readiness: ReadinessService,
+  ) {}
   @Get("ready")
   async ready() {
     const result = await this.readiness.check();

@@ -40,7 +40,9 @@ test("FAILED e terminal, preserva carteira e nao permite voltar a aplicar", () =
   expect(wallet.version).toBe(1);
   expect(() => transaction.apply(wallet)).toThrow("terminal");
   expect(() => transaction.reject("INSUFFICIENT_FUNDS")).toThrow("terminal");
-  expect(() => transaction.fail("INFRASTRUCTURE_RETRY_EXHAUSTED")).toThrow("terminal");
+  expect(() => transaction.fail("INFRASTRUCTURE_RETRY_EXHAUSTED")).toThrow(
+    "terminal",
+  );
 });
 
 test("BET debita uma vez e nao permite reaplicar uma transacao terminal", () => {

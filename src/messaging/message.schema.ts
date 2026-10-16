@@ -20,7 +20,8 @@ export interface OutboxRecord {
   publishedAt: Date | null;
 }
 export const InboxSchema = new EntitySchema<InboxRecord>({
-  name: "InboxRecord", tableName: "inbox_messages",
+  name: "InboxRecord",
+  tableName: "inbox_messages",
   properties: {
     consumerName: { type: "string", primary: true, length: 100 },
     messageId: { type: "string", primary: true, length: 200 },
@@ -31,7 +32,8 @@ export const InboxSchema = new EntitySchema<InboxRecord>({
   },
 });
 export const OutboxSchema = new EntitySchema<OutboxRecord>({
-  name: "OutboxRecord", tableName: "outbox_messages",
+  name: "OutboxRecord",
+  tableName: "outbox_messages",
   properties: {
     id: { type: "uuid", primary: true },
     aggregateId: { type: "uuid" },

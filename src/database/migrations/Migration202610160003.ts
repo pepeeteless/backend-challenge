@@ -17,7 +17,9 @@ export class Migration202610160003 extends Migration {
       CHECK (payload->>'eventId' = id::text),
       CHECK (payload->>'eventType' = event_type)
     );`);
-    this.addSql(`CREATE INDEX outbox_due ON outbox_messages(next_attempt_at, id) WHERE published_at IS NULL;`);
+    this.addSql(
+      `CREATE INDEX outbox_due ON outbox_messages(next_attempt_at, id) WHERE published_at IS NULL;`,
+    );
   }
   override async down(): Promise<void> {
     this.addSql("DROP TABLE outbox_messages;");

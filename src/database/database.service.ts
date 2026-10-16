@@ -12,7 +12,10 @@ export class DatabaseService implements OnModuleInit, OnApplicationShutdown {
   private orm!: MikroORM;
 
   async onModuleInit(): Promise<void> {
-    this.orm = await MikroORM.init({ ...config, logger: () => logEvent("orm_diagnostic", {}, "error") });
+    this.orm = await MikroORM.init({
+      ...config,
+      logger: () => logEvent("orm_diagnostic", {}, "error"),
+    });
     logEvent("database_initialized");
   }
 

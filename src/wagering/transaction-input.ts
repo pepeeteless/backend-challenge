@@ -41,13 +41,25 @@ export const transactionInputSchema = z
   .superRefine((input, ctx) => {
     const reference = input.referenceExternalTransactionId;
     if ((input.kind === "REFUND" || input.kind === "ROLLBACK") && !reference) {
-      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Reference is required" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["referenceExternalTransactionId"],
+        message: "Reference is required",
+      });
     }
     if (reference && (input.kind === "BET" || input.kind === "LOSS")) {
-      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Reference not supported for this kind" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["referenceExternalTransactionId"],
+        message: "Reference not supported for this kind",
+      });
     }
     if (reference === input.externalTransactionId) {
-      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Cannot reference itself" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["referenceExternalTransactionId"],
+        message: "Cannot reference itself",
+      });
     }
   });
 

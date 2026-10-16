@@ -98,8 +98,11 @@ async function assertWallet(
 
 test("nova migracao pode ser revertida e reaplicada em banco compativel", async () => {
   await orm.migrator.down();
-  const rows = await orm.em.fork()
-    .execute(`SELECT table_name FROM information_schema.tables WHERE table_name = 'dead_letter_messages'`);
+  const rows = await orm.em
+    .fork()
+    .execute(
+      `SELECT table_name FROM information_schema.tables WHERE table_name = 'dead_letter_messages'`,
+    );
   expect(rows).toHaveLength(0);
   await orm.migrator.up();
 });
