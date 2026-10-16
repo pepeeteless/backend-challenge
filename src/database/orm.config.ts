@@ -4,6 +4,7 @@ import { Migrator } from "@mikro-orm/migrations";
 import { Migration202610140001 } from "./migrations/Migration202610140001";
 import { Migration202610140002 } from "./migrations/Migration202610140002";
 import { Migration202610150001 } from "./migrations/Migration202610150001";
+import { Migration202610160001 } from "./migrations/Migration202610160001";
 
 export default defineConfig({
   host: "127.0.0.1",
@@ -18,6 +19,7 @@ export default defineConfig({
       Migration202610140001,
       Migration202610140002,
       Migration202610150001,
+      Migration202610160001,
     ],
     transactional: true,
     allOrNothing: true,

@@ -59,6 +59,57 @@
           "enumItems": [],
           "mappedType": "string"
         },
+        "external_transaction_id": {
+          "name": "external_transaction_id",
+          "type": "varchar(200)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 200,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "varchar(50)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 50,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "game_id": {
+          "name": "game_id",
+          "type": "varchar(200)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 200,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
         "id": {
           "name": "id",
           "type": "uuid",
@@ -75,6 +126,23 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "uuid"
+        },
+        "idempotency_key": {
+          "name": "idempotency_key",
+          "type": "varchar(200)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 200,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
         },
         "kind": {
           "name": "kind",
@@ -100,6 +168,40 @@
           ],
           "mappedType": "enum"
         },
+        "payload_hash": {
+          "name": "payload_hash",
+          "type": "varchar(64)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 64,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "player_id": {
+          "name": "player_id",
+          "type": "uuid",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "uuid"
+        },
         "processed_at": {
           "name": "processed_at",
           "type": "timestamptz(6)",
@@ -116,6 +218,57 @@
           "collation": null,
           "enumItems": [],
           "mappedType": "datetime"
+        },
+        "provider_id": {
+          "name": "provider_id",
+          "type": "varchar(200)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": true,
+          "length": 200,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
+        },
+        "response": {
+          "name": "response",
+          "type": "jsonb",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": null,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "json"
+        },
+        "round_id": {
+          "name": "round_id",
+          "type": "varchar(200)",
+          "unsigned": false,
+          "autoincrement": false,
+          "primary": false,
+          "nullable": true,
+          "unique": false,
+          "length": 200,
+          "precision": null,
+          "scale": null,
+          "default": null,
+          "comment": null,
+          "collation": null,
+          "enumItems": [],
+          "mappedType": "string"
         },
         "status": {
           "name": "status",
@@ -161,6 +314,27 @@
       "indexes": [
         {
           "columnNames": [
+            "provider_id",
+            "external_transaction_id"
+          ],
+          "composite": true,
+          "constraint": true,
+          "keyName": "transactions_external_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
+            "idempotency_key"
+          ],
+          "composite": false,
+          "constraint": true,
+          "keyName": "transactions_idempotency_unique",
+          "primary": false,
+          "unique": true
+        },
+        {
+          "columnNames": [
             "id",
             "wallet_id",
             "currency",
@@ -202,6 +376,12 @@
           "columnName": "amount"
         },
         {
+          "name": "transactions_external_fields",
+          "expression": "(kind = 'OPENING'::text) OR ((provider_id IS NOT NULL) AND (length(provider_id) > 0) AND (external_transaction_id IS NOT NULL) AND (length(external_transaction_id) > 0) AND (idempotency_key IS NOT NULL) AND (length(idempotency_key) > 0) AND (payload_hash IS NOT NULL) AND (payload_hash ~ '^[a-f0-9]{64}$'::text) AND (player_id IS NOT NULL) AND (round_id IS NOT NULL) AND (game_id IS NOT NULL))",
+          "definition": "CHECK ((((kind)::text = 'OPENING'::text) OR ((provider_id IS NOT NULL) AND (length((provider_id)::text) > 0) AND (external_transaction_id IS NOT NULL) AND (length((external_transaction_id)::text) > 0) AND (idempotency_key IS NOT NULL) AND (length((idempotency_key)::text) > 0) AND (payload_hash IS NOT NULL) AND ((payload_hash)::text ~ '^[a-f0-9]{64}$'::text) AND (player_id IS NOT NULL) AND (round_id IS NOT NULL) AND (game_id IS NOT NULL))))",
+          "columnName": "external_transaction_id"
+        },
+        {
           "name": "transactions_kind_valid",
           "expression": "\"kind\" in ('OPENING', 'BET', 'WIN', 'LOSS', 'REFUND', 'ROLLBACK')",
           "definition": "check (\"kind\" in ('OPENING', 'BET', 'WIN', 'LOSS', 'REFUND', 'ROLLBACK'))",
@@ -214,24 +394,46 @@
           "columnName": "processed_at"
         },
         {
+          "name": "transactions_rejection_code",
+          "expression": "(kind = 'OPENING'::text) OR ((status = ANY (ARRAY['REJECTED'::character varying, 'FAILED'::character varying])) = (failure_code IS NOT NULL))",
+          "definition": "CHECK ((((kind)::text = 'OPENING'::text) OR (((status)::text = ANY ((ARRAY['REJECTED'::character varying, 'FAILED'::character varying])::text[])) = (failure_code IS NOT NULL))))",
+          "columnName": "failure_code"
+        },
+        {
           "name": "transactions_status_valid",
           "expression": "\"status\" in ('PENDING', 'PENDING_REFERENCE', 'PROCESSED', 'REJECTED', 'FAILED')",
           "definition": "check (\"status\" in ('PENDING', 'PENDING_REFERENCE', 'PROCESSED', 'REJECTED', 'FAILED'))",
           "columnName": "status"
+        },
+        {
+          "name": "transactions_terminal_response",
+          "expression": "(kind = 'OPENING'::text) OR (status <> ALL (ARRAY['PROCESSED'::character varying, 'REJECTED'::character varying, 'FAILED'::character varying])) OR ((response IS NOT NULL) AND (jsonb_typeof(response) = 'object'::text))",
+          "definition": "CHECK ((((kind)::text = 'OPENING'::text) OR ((status)::text <> ALL ((ARRAY['PROCESSED'::character varying, 'REJECTED'::character varying, 'FAILED'::character varying])::text[])) OR ((response IS NOT NULL) AND (jsonb_typeof(response) = 'object'::text))))",
+          "columnName": "kind"
         }
       ],
-      "triggers": [],
-      "foreignKeys": {
-        "transactions_wallet_currency_fk": {
-          "columnNames": [
-            "wallet_id",
-            "currency"
+      "triggers": [
+        {
+          "name": "wager_transaction_protection",
+          "timing": "before",
+          "events": [
+            "delete",
+            "insert",
+            "update"
           ],
-          "constraintName": "transactions_wallet_currency_fk",
+          "forEach": "row",
+          "body": ""
+        }
+      ],
+      "foreignKeys": {
+        "transactions_wallet_fk": {
+          "columnNames": [
+            "wallet_id"
+          ],
+          "constraintName": "transactions_wallet_fk",
           "localTableName": "public.wager_transactions",
           "referencedColumnNames": [
-            "id",
-            "currency"
+            "id"
           ],
           "referencedTableName": "public.wallets"
         }
