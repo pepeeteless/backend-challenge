@@ -1,0 +1,51 @@
+x-app: &app
+  build: .
+  environment:
+    DB_HOST: postgres
+    DB_NAME: pepe
+    DB_USER: wager_app
+    DB_PASSWORD: wager_app_local
+    SQS_ENDPOINT: http://localstack:4566
+  depends_on:
+    setup:
+      condition: service_completed_successfully
+  stop_grace_period: 45s
+  healthcheck:
+    test: ["CMD", "bun", "-e", "const r=await fetch('http://localhost:3000/health/ready');process.exit(r.ok?0:1)"]
+    interval: 10s
+    timeout: 5s
+    retries: 6
+
+services:
+  postgres:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pepe -d pepe"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  localstack:
+    healthcheck:
+      test: ["CMD", "awslocal", "sqs", "list-queues"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  setup:
+    build: .
+    environment:
+      DB_HOST: postgres
+      SQS_ENDPOINT: http://localstack:4566
+    command: ["sh", "-c", "bun run migrate:up && bun run scripts/setup-runtime-role.ts && bun run queues:setup"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+  app1:
+    <<: *app
+    ports: ["127.0.0.1:3001:3000"]
+  app2:
+    <<: *app
+    ports: ["127.0.0.1:3002:3000"]
+  app3:
+    <<: *app
+    ports: ["127.0.0.1:3003:3000"]

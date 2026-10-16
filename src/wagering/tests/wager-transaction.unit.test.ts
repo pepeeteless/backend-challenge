@@ -1,8 +1,11 @@
 import { expect, test } from "bun:test";
-import { Money } from "../wallets/money";
-import { Wallet } from "../wallets/wallet";
-import { betInputSchema, hashBetPayload } from "./bet-input";
-import { isTerminalStatus, WagerTransaction } from "./wager-transaction";
+import { Money } from "../../wallets/money";
+import { Wallet } from "../../wallets/wallet";
+import {
+  transactionInputSchema,
+  hashTransactionPayload,
+} from "../transaction-input";
+import { isTerminalStatus, WagerTransaction } from "../wager-transaction";
 
 function fixture(amount = "80.00", currency = "BRL") {
   const wallet = Wallet.open({
@@ -25,6 +28,20 @@ function fixture(amount = "80.00", currency = "BRL") {
   };
   return { wallet, identity, transaction: WagerTransaction.create(identity) };
 }
+
+test("FAILED e terminal, preserva carteira e nao permite voltar a aplicar", () => {
+  const { wallet, transaction } = fixture();
+  transaction.fail("INFRASTRUCTURE_RETRY_EXHAUSTED");
+  expect(transaction.status).toBe("FAILED");
+  expect(transaction.failureCode).toBe("INFRASTRUCTURE_RETRY_EXHAUSTED");
+  expect(transaction.processedAt).toBeUndefined();
+  expect(transaction.isTerminal()).toBe(true);
+  expect(wallet.balance.toJSON().amount).toBe("100.00");
+  expect(wallet.version).toBe(1);
+  expect(() => transaction.apply(wallet)).toThrow("terminal");
+  expect(() => transaction.reject("INSUFFICIENT_FUNDS")).toThrow("terminal");
+  expect(() => transaction.fail("INFRASTRUCTURE_RETRY_EXHAUSTED")).toThrow("terminal");
+});
 
 test("BET debita uma vez e nao permite reaplicar uma transacao terminal", () => {
   const { wallet, transaction } = fixture();
@@ -82,7 +99,7 @@ test("rehydrate preserva estado terminal e protege a data", () => {
 
 test("hash canonico ignora ordem das chaves e distingue valores de negocio", () => {
   const { identity } = fixture();
-  const input = betInputSchema.parse({
+  const input = transactionInputSchema.parse({
     providerId: identity.providerId,
     externalTransactionId: identity.externalTransactionId,
     playerId: identity.playerId,
@@ -96,11 +113,11 @@ test("hash canonico ignora ordem das chaves e distingue valores de negocio", () 
     ...Object.fromEntries(Object.entries(input).reverse()),
     money: { currency: "BRL", amount: "80.00" },
   };
-  expect(hashBetPayload(input)).toBe(
-    hashBetPayload(betInputSchema.parse(reordered)),
+  expect(hashTransactionPayload(input)).toBe(
+    hashTransactionPayload(transactionInputSchema.parse(reordered)),
   );
-  expect(hashBetPayload(input)).not.toBe(
-    hashBetPayload({ ...input, roundId: "other" }),
+  expect(hashTransactionPayload(input)).not.toBe(
+    hashTransactionPayload({ ...input, roundId: "other" }),
   );
 });
 
@@ -142,6 +159,51 @@ test("LOSS em outra moeda é rejeitada sem alterar a carteira", () => {
   expect(loss.status).toBe("REJECTED");
   expect(loss.failureCode).toBe("CURRENCY_MISMATCH");
   expect(loss.processedAt).toBeUndefined();
+  expect(wallet.balance.toJSON().amount).toBe("100.00");
+  expect(wallet.version).toBe(1);
+});
+
+test("WIN credita o prêmio e produz lançamento de crédito", () => {
+  const { wallet, transaction, identity } = fixture();
+
+  transaction.applyBet(wallet);
+
+  const win = WagerTransaction.create({
+    ...identity,
+    id: crypto.randomUUID(),
+    externalTransactionId: "win-1",
+    idempotencyKey: "provider-a:win-1",
+    kind: "WIN",
+    money: Money.from({ amount: "150.00", currency: "BRL" }),
+  });
+
+  const entry = win.applyWin(wallet);
+
+  expect(win.status).toBe("PROCESSED");
+  expect(entry?.direction).toBe("CREDIT");
+  expect(entry?.balanceBefore.toJSON().amount).toBe("20.00");
+  expect(entry?.balanceAfter.toJSON().amount).toBe("170.00");
+  expect(wallet.balance.toJSON().amount).toBe("170.00");
+  expect(wallet.version).toBe(3);
+
+  expect(() => win.applyWin(wallet)).toThrow("terminal");
+});
+
+test("WIN acima do limite não altera a carteira", () => {
+  const { wallet, identity } = fixture();
+
+  const win = WagerTransaction.create({
+    ...identity,
+    kind: "WIN",
+    money: Money.from({
+      amount: "999999999999999999.99",
+      currency: "BRL",
+    }),
+  });
+
+  expect(win.applyWin(wallet)).toBeUndefined();
+  expect(win.status).toBe("REJECTED");
+  expect(win.failureCode).toBe("BALANCE_LIMIT_EXCEEDED");
   expect(wallet.balance.toJSON().amount).toBe("100.00");
   expect(wallet.version).toBe(1);
 });

@@ -11,9 +11,12 @@
     "services:up": "docker compose up -d",
     "migrate:up": "bun run scripts/migrate.ts up",
     "migrate:down": "bun run scripts/migrate.ts down",
-    "db:check": "bun run scripts/check-connection.ts"
+    "db:check": "bun run scripts/check-connection.ts",
+    "queues:setup": "bun run scripts/setup-queues.ts",
+    "sqs:send": "bun run scripts/send-transaction.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-sqs": "^3.1152.0",
     "@mikro-orm/core": "7.2",
     "@mikro-orm/migrations": "7.2.5",
     "@mikro-orm/postgresql": "7.2",

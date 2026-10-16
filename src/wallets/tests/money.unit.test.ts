@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { Money } from "./money";
+import { Money } from "../money";
 
 test("soma valores exatos sem alterar os originais", () => {
   const primeiro = Money.from({ amount: "0.10", currency: "BRL" });

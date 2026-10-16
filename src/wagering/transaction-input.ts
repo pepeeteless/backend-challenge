@@ -8,7 +8,7 @@ const uuid = z
   .uuid()
   .transform((value) => value.toLowerCase());
 
-export const betInputSchema = z
+export const transactionInputSchema = z
   .object({
     providerId: identifier,
     externalTransactionId: identifier,
@@ -16,7 +16,8 @@ export const betInputSchema = z
     walletId: uuid,
     roundId: identifier,
     gameId: identifier,
-    kind: z.literal("BET"),
+    kind: z.enum(["BET", "LOSS", "WIN", "REFUND", "ROLLBACK"]),
+    referenceExternalTransactionId: identifier.optional(),
     money: z
       .object({
         amount: z.string(),
@@ -36,23 +37,36 @@ export const betInputSchema = z
       )
       .transform((value) => Money.from(value).toJSON()),
   })
-  .strict();
+  .strict()
+  .superRefine((input, ctx) => {
+    const reference = input.referenceExternalTransactionId;
+    if ((input.kind === "REFUND" || input.kind === "ROLLBACK") && !reference) {
+      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Reference is required" });
+    }
+    if (reference && (input.kind === "BET" || input.kind === "LOSS")) {
+      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Reference not supported for this kind" });
+    }
+    if (reference === input.externalTransactionId) {
+      ctx.addIssue({ code: "custom", path: ["referenceExternalTransactionId"], message: "Cannot reference itself" });
+    }
+  });
 
 export const idempotencyKeySchema = identifier;
-export type BetInput = z.infer<typeof betInputSchema>;
+export type TransactionInput = z.infer<typeof transactionInputSchema>;
 
 function canonicalJson(value: unknown): string {
   if (value !== null && typeof value === "object" && !Array.isArray(value)) {
     const object = value as Record<string, unknown>;
     return `{${Object.keys(object)
+      .filter((key) => object[key] !== undefined)
       .sort()
       .map((key) => `${JSON.stringify(key)}:${canonicalJson(object[key])}`)
       .join(",")}}`;
   }
-  // BetInput contem apenas objetos e strings; nao inclui metadados HTTP/SQS.
+  // TransactionInput contem apenas objetos e strings; nao inclui metadados HTTP/SQS.
   return JSON.stringify(value);
 }
 
-export function hashBetPayload(input: BetInput): string {
+export function hashTransactionPayload(input: TransactionInput): string {
   return createHash("sha256").update(canonicalJson(input)).digest("hex");
 }

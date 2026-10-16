@@ -1,12 +1,16 @@
 import "reflect-metadata";
 import { expect, test } from "bun:test";
 import { NestFactory } from "@nestjs/core";
-import { AppModule } from "../app.module";
-import { DatabaseService } from "../database/database.service";
-import { WalletSchema } from "./wallet.schema";
+import { Module } from "@nestjs/common";
+import { WalletsController } from "../wallets.controller";
+import { DatabaseService } from "../../database/database.service";
+import { WalletSchema } from "../wallet.schema";
+
+@Module({ controllers: [WalletsController], providers: [DatabaseService] })
+class HttpTestModule {}
 
 test("HTTP rejeita valores inválidos e distingue consultas inválidas de carteiras ausentes", async () => {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create(HttpTestModule, {
     logger: false,
     abortOnError: false,
   });

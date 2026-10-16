@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { Money } from "./money";
-import { WalletLedgerEntry } from "./wallet-ledger-entry";
+import { Money } from "../money";
+import { WalletLedgerEntry } from "../wallet-ledger-entry";
 
 const brl = (amount: string) => Money.from({ amount, currency: "BRL" });
 

@@ -1,13 +1,26 @@
+import { UseGuards } from "@nestjs/common";
+import { ProviderAuthGuard } from "../auth/provider-auth.guard";
 import {
-  Body, Controller, Headers, HttpException, Inject, Post, Res,
-  ServiceUnavailableException,
+  Body,
+  Controller,
+  Headers,
+  HttpException,
+  Inject,
+  Post,
+  Res,
+  UseFilters,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { ProcessBet, WagerRequestError } from "./process-bet";
+import { ProcessTransaction, WagerRequestError } from "./process-transaction";
+import { DatabaseHttpFilter } from "../database/database-http.filter";
 
 @Controller("wagering/transactions")
+@UseFilters(DatabaseHttpFilter)
+@UseGuards(ProviderAuthGuard)
 export class WageringController {
-  constructor(@Inject(DatabaseService) private readonly database: DatabaseService) {}
+  constructor(
+    @Inject(DatabaseService) private readonly database: DatabaseService,
+  ) {}
 
   @Post()
   async submit(
@@ -16,19 +29,17 @@ export class WageringController {
     @Res({ passthrough: true }) response: { status(code: number): unknown },
   ) {
     try {
-      const result = await new ProcessBet(this.database.createEntityManager()).execute(body, key);
-      response.status(result.status === "REJECTED" ? 422 : 200);
+      const result = await new ProcessTransaction(
+        this.database.createEntityManager(),
+      ).execute(body, key);
+      response.status(result.status === "FAILED" ? 500 : result.status === "REJECTED" ? 422 : result.status === "PENDING_REFERENCE" ? 202 : 200);
       return result;
     } catch (error) {
       if (error instanceof WagerRequestError) {
-        throw new HttpException({ code: error.code, message: error.message }, error.httpStatus);
-      }
-      const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
-      if (/^(08|53|57)/.test(code)
-        || ["40001", "40P01", "55P03", "ECONNREFUSED", "ECONNRESET", "ETIMEDOUT"].includes(code)) {
-        throw new ServiceUnavailableException({
-          code: "TEMPORARY_UNAVAILABLE", message: "Retry with the same idempotency key",
-        });
+        throw new HttpException(
+          { code: error.code, message: error.message },
+          error.httpStatus,
+        );
       }
       throw error;
     }

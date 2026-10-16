@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { MikroORM } from "@mikro-orm/postgresql";
-import config from "../database/orm.config";
+import config from "../../database/orm.config";
 
 const scenarios = [
   {

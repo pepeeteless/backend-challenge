@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { MikroORM } from "@mikro-orm/postgresql";
-import { OpenWallet } from "./open-wallet";
-import config from "../database/orm.config";
+import { OpenWallet } from "../open-wallet";
+import config from "../../database/orm.config";
 
 test.each([
   { amount: "100.00", entries: "1" },

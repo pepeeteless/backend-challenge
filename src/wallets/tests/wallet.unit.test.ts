@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
-import { Money } from "./money";
-import { Wallet } from "./wallet";
+import { Money } from "../money";
+import { Wallet } from "../wallet";
 
 test("abre carteira com saldo informado e versão 1", () => {
   const wallet = Wallet.open({

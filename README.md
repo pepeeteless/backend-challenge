@@ -744,3 +744,82 @@ wallet.balance == saldo reconstruído pelo ledger
 ### Diferenciais opcionais
 
 Teste de carga também conta como diferencial. Se fizer, exponha como `bun run test:load` e registre ambiente, metodologia, throughput, p50/p95/p99, taxa de erro, conflitos de concorrência e outbox lag. Não há meta de RPS — a qualidade do experimento e a honestidade da análise pesam mais que o número bruto.
+
+---
+
+## Execução da implementação atual
+
+Pré-requisitos: Bun 1.x e Docker com Compose. Na raiz deste repositório, PowerShell:
+
+```powershell
+bun install
+docker compose up -d
+bun run migrate:up
+bun run queues:setup
+bun run start
+```
+
+A API escuta em `http://localhost:3000`; PostgreSQL em `127.0.0.1:5432` e
+LocalStack em `127.0.0.1:4566`. Aguarde os containers iniciarem antes das migrations
+e da criação de filas. `GET /health/live` verifica o processo;
+`GET /health/ready` verifica PostgreSQL e as filas (200/503).
+`GET /metrics` expõe métricas em texto Prometheus.
+
+Em outro terminal, na mesma pasta:
+
+```powershell
+bun run typecheck
+bun test
+```
+
+Os testes de integração precisam dos dois containers. Criam bancos e filas
+temporários; os testes de persistência mais antigos usam rollback no banco local.
+Não executar essa configuração de desenvolvimento contra ambientes de produção.
+
+Para enviar um envelope da seção 10 com IDs reais, salve-o em `message.json` e
+rode `bun run sqs:send .\message.json`. Reenviar o mesmo arquivo verifica a
+deduplicação persistente. O consumidor e o publisher iniciam junto com o Nest.
+
+O desafio ainda está em construção. [GUIA.md](GUIA.md) registra o progresso e
+os próximos blocos; [ARCHITECTURE.md](ARCHITECTURE.md) descreve decisões e
+limitações. Os requisitos originais acima permanecem como referência.
+
+### Aplicação completa: três instâncias em containers
+
+Na raiz do repositório, PowerShell:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml up -d --build
+docker compose -f compose.yaml -f compose.app.yaml ps
+bun run scripts/verify-cluster.ts
+```
+
+O serviço `setup` executa migrations, configura o usuário restrito e cria as filas
+antes de iniciar as APIs. APIs: http://localhost:3001, http://localhost:3002 e
+http://localhost:3003. Cada uma executa também os workers. Não há balanceador;
+o script distribui explicitamente as requisições pelas três portas.
+
+A verificação cria uma carteira de demonstração com 100.00 BRL, disputa duas
+apostas de 80.00, reenvia a vencedora 50 vezes entre as três APIs, reinicia app1
+e reconcilia saldo/ledger em todas. Esperado: result=ok, balance=20.00, um débito.
+Mantém os registros da demonstração no banco para inspeção. Esse script reinicia
+somente app1; execute quando não estiver usando essa instância para outra atividade.
+
+Para parar apenas as APIs, preservando banco e filas:
+
+```powershell
+docker compose -f compose.yaml -f compose.app.yaml stop app1 app2 app3
+```
+
+Credenciais são exclusivamente de desenvolvimento local. `setup` usa o dono do
+schema; APIs usam `wager_app`, sem superuser, criação de banco ou permissão de
+UPDATE/DELETE/TRUNCATE no ledger. Para executar a API fora do Docker com esse
+mesmo usuário, após o setup, configure DB_USER=wager_app e
+DB_PASSWORD=wager_app_local no PowerShell. Não use esse usuário restrito para
+migrations nem para a suíte de testes que cria bancos temporários.
+
+Para preparar a entrevista, veja [APRESENTACAO.md](APRESENTACAO.md): roteiro de
+fluxo, demonstração reproduzível, evidências dos testes e limitações assumidas.
+
+Para estudar a implementação do início ao fim, veja [TUTORIAL.md](TUTORIAL.md):
+NestJS, domínio, ORM, banco, validações, fluxos HTTP/SQS, concorrência e recuperação.
