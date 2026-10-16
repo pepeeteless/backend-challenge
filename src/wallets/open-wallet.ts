@@ -27,7 +27,6 @@ export class OpenWallet {
       const transactions = new WagerTransactionRepository(em);
       const ledger = new LedgerRepository(em);
 
-      // flush insere a carteira antes das referencias, mas nao faz commit.
       await wallets.insert(wallet);
       if (money.isPositive()) {
         const transactionId = crypto.randomUUID();

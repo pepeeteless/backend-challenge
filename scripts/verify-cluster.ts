@@ -35,7 +35,6 @@ for (const result of repeats) {
   assert.equal(result.data.idempotentReplay, true);
   assert.equal(result.data.balance.amount, "20.00");
 }
-// Reinicio real de uma API; PostgreSQL e filas continuam rodando.
 const restart = Bun.spawn(["docker", "compose", "-f", "compose.yaml", "-f", "compose.app.yaml", "restart", "app1"],
   { stdout: "inherit", stderr: "inherit" });
 assert.equal(await restart.exited, 0);
@@ -54,7 +53,7 @@ for (const url of urls) {
   assert.equal(reconciliation.status, 200);
   assert.equal(reconciliation.data.consistent, true);
   assert.equal(reconciliation.data.storedBalance.amount, "20.00");
-  assert.equal(reconciliation.data.checkedEntries, 2); // abertura + um debito
+  assert.equal(reconciliation.data.checkedEntries, 2);
   const ledger = await request(url, `/wallets/${walletId}/ledger`);
   assert.equal(ledger.data.items.filter((entry: { direction: string }) => entry.direction === "DEBIT").length, 1);
 }

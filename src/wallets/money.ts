@@ -22,7 +22,7 @@ export class Money {
   static from(props: MoneyProps): Money {
     if (
       typeof props.amount !== "string" ||
-      !/^\d+\.\d{2}$/.test(props.amount) // define que a entrada deve ter dois numeros decimais.
+      !/^\d+\.\d{2}$/.test(props.amount)
     ) {
       throw new Error(
         "The value must be a not negative string and with two decimal ",

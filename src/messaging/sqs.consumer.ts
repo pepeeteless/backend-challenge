@@ -18,7 +18,6 @@ export class SqsConsumer {
     return result.Messages?.[0];
   }
 
-  // Separado do ack para tornar explicito: esta promessa resolve APOS o commit.
   async process(message: Message) {
     const envelope = parseWagerEnvelope(message.Body);
     const { idempotencyKey, ...input } = envelope.data;
@@ -41,8 +40,7 @@ export class SqsConsumer {
       fields.messageId = envelope.messageId;
       if (typeof envelope.data.walletId === "string") fields.walletId = envelope.data.walletId;
       if (typeof envelope.data.providerId === "string") fields.providerId = envelope.data.providerId;
-    } catch { /* Envelope invalido: so o ID de transporte esta disponivel. */ }
-    // Mantem a posse durante operacoes demoradas; morte do processo interrompe a renovacao.
+    } catch {  }
     let renewing = Promise.resolve();
     const renewal = setInterval(() => {
       renewing = renewing.then(async () => {
@@ -57,13 +55,11 @@ export class SqsConsumer {
         clearInterval(renewal);
         await renewing;
       }
-      // Rejeicao de negocio e referencia pendente sao resultados persistidos, portanto ack.
       await this.acknowledge(message);
     } catch (error) {
       const attempts = Number(message.Attributes?.ApproximateReceiveCount ?? "1");
       const permanent = error instanceof WagerRequestError || error instanceof InboxConflictError;
       if (permanent || attempts >= 5) {
-        // Primeiro DLQ, depois delete. Uma queda entre ambos pode duplicar a DLQ, nunca perder a mensagem.
         await this.client.send(new SendMessageCommand({ QueueUrl: this.queues.deadLetters,
           MessageBody: message.Body ?? "", MessageGroupId: message.Attributes?.MessageGroupId ?? "invalid",
           MessageDeduplicationId: createHash("sha256").update(message.MessageId ?? message.Body ?? "").digest("hex") }));

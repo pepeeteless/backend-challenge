@@ -12,7 +12,6 @@ export class OutboxPublisher {
 
   async publishOnce(now = new Date()): Promise<boolean> {
     return this.em.transactional(async (em) => {
-      // SKIP LOCKED permite publishers concorrentes, sem lock nas wallets.
       const record = await em.findOne(OutboxSchema, { publishedAt: null, nextAttemptAt: { $lte: now } }, {
         lockMode: LockMode.PESSIMISTIC_PARTIAL_WRITE, orderBy: { nextAttemptAt: "asc", id: "asc" }, refresh: true,
       });

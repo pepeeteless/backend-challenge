@@ -1,4 +1,3 @@
-// Dez avaliacoes: a primeira entrega e mais nove retries. Aproximadamente 4 min.
 export const REFERENCE_MAX_ATTEMPTS = 10;
 
 export function nextReferenceAttempt(now: Date, attempts: number): Date {

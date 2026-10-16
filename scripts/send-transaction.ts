@@ -10,7 +10,6 @@ if (typeof envelope.messageId !== "string" || !envelope.messageId) throw new Err
 const client = createSqsClient();
 try {
   const queues = await findQueues(client);
-  // Novo ID de transporte permite demonstrar deduplicacao na inbox, mesmo dentro de 5 minutos.
   await sendJson(client, queues.transactions, envelope, input.walletId, crypto.randomUUID());
   console.log("Mensagem enviada; consulte o saldo pela API.");
 } finally { client.destroy(); }

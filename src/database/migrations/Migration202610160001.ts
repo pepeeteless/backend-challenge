@@ -32,8 +32,6 @@ export class Migration202610160001 extends Migration {
           OR (response IS NOT NULL AND jsonb_typeof(response) = 'object')
         );
 
-      -- Uma moeda divergente precisa ser registrada como REJECTED para auditoria.
-      -- O ledger ainda exige moeda igual a carteira E a transacao.
       ALTER TABLE wager_transactions DROP CONSTRAINT transactions_wallet_currency_fk;
       ALTER TABLE wager_transactions ADD CONSTRAINT transactions_wallet_fk
         FOREIGN KEY (wallet_id) REFERENCES wallets(id);
@@ -62,8 +60,6 @@ export class Migration202610160001 extends Migration {
   }
 
   override async down(): Promise<void> {
-    // A FK antiga pode impedir downgrade se houver rejeicoes em outra moeda.
-    // Nesse caso o PostgreSQL aborta a reversao inteira, preservando os dados.
     this.addSql(`
       DROP TRIGGER wager_transaction_protection ON wager_transactions;
       DROP FUNCTION protect_wager_transaction();

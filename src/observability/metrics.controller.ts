@@ -33,7 +33,6 @@ export class MetricsController {
       if (visible === undefined || inFlight === undefined) throw new Error("Missing queue metrics");
       return `# TYPE sqs_metrics_up gauge\nsqs_metrics_up 1\n# TYPE sqs_dlq_messages gauge\nsqs_dlq_messages ${Number(visible) + Number(inFlight)}\n`;
     } catch {
-      // Ausencia de leitura nao significa fila vazia; omite o valor desconhecido.
       return "# TYPE sqs_metrics_up gauge\nsqs_metrics_up 0\n";
     }
   }

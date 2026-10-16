@@ -32,9 +32,6 @@ export class WagerTransactionRepository {
 
   async tryInsertPending(transaction: WagerTransaction): Promise<boolean> {
     const identity = transaction.identity;
-    // QueryBuilder e a API do ORM para construir uma insercao atomica.
-    // Sem alvo no onConflict: qualquer uma das duas identidades unicas pode conflitar.
-    // Nao usar upsert/merge: isso sobrescreveria uma operacao recebida anteriormente.
     const rows = await this.em
       .createQueryBuilder(WagerTransactionSchema)
       .insert({

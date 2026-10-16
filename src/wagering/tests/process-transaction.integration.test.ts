@@ -201,7 +201,6 @@ test("rejeicao por moeda divergente e persistida sem lancamento", async () => {
 test("falha ao inserir ledger desfaz saldo e BET; reenvio depois pode concluir", async () => {
   const input = await fixture();
   const em = orm.em.fork();
-  // Constraint exclusiva do banco descartavel: falha depois de UPDATE wallets.
   await em.execute(`ALTER TABLE wallet_ledger_entries ADD CONSTRAINT test_failure
     CHECK (wallet_id <> '${input.walletId}'::uuid OR direction <> 'DEBIT') NOT VALID`);
   try {
@@ -262,7 +261,6 @@ test("carteira bloqueada nao impede processar outra carteira", async () => {
 
 test("tres processos independentes reenviam a mesma BET sem duplicar", async () => {
   const input = await fixture();
-  // fileURLToPath tambem trata letras de unidade e espacos no Windows.
   const { fileURLToPath } = await import("node:url");
   const fixturePath = fileURLToPath(
     new URL("./transaction-process.fixture.ts", import.meta.url),
@@ -443,7 +441,6 @@ test("ORM preserva centavos grandes, datas e resposta JSON de transacao e ledger
     money: { amount: "0.01", currency: "BRL" },
   });
 
-  // Outro EntityManager obriga uma leitura real; nao reutiliza os objetos gravados.
   const em = orm.em.fork();
   const transaction = await em.findOneOrFail(WagerTransactionSchema, {
     id: result.transactionId,

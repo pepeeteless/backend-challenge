@@ -1,4 +1,3 @@
-// Executado somente pelo teste que verifica tres processos Bun independentes.
 import { MikroORM } from "@mikro-orm/postgresql";
 import config from "../../database/orm.config";
 import { ProcessTransaction } from "../process-transaction";

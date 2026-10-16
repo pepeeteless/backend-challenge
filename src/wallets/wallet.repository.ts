@@ -13,8 +13,6 @@ export class WalletRepository {
   }
 
   async findForUpdate(id: string): Promise<Wallet | null> {
-    // Configuracao especifica do PostgreSQL, restrita a transacao atual.
-    // Tambem limita esperas posteriores por constraints de idempotencia.
     await this.em.execute("SET LOCAL lock_timeout = '5s'");
     const record = await this.em.findOne(WalletSchema, { id }, {
       lockMode: LockMode.PESSIMISTIC_WRITE,
@@ -34,7 +32,6 @@ export class WalletRepository {
   }
 
   async save(wallet: Wallet): Promise<void> {
-    // O registro carregado por findForUpdate continua gerenciado pelo mesmo em.
     const record = await this.em.findOneOrFail(WalletSchema, { id: wallet.id });
     record.balance = wallet.balance.toJSON().amount;
     record.version = wallet.version;

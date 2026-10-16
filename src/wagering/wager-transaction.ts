@@ -39,7 +39,6 @@ interface TransactionState {
   referenceTransactionId?: string;
 }
 
-// Projecao somente dos dados necessarios para validar uma referencia.
 export interface TransactionReference {
   id: string;
   providerId: string;
@@ -158,7 +157,6 @@ export class WagerTransaction {
     return entry;
   }
 
-  // Mantidos para os exercicios/testes existentes; usam a mesma regra central.
   applyBet(wallet: Wallet): WalletLedgerEntry | undefined {
     if (this.identity.kind !== "BET") throw new Error("Expected BET transaction");
     return this.apply(wallet);

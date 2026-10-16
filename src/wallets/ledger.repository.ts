@@ -37,8 +37,6 @@ export class LedgerRepository {
   }
 
   async reconcile(walletId: string): Promise<ReconciliationResult | null> {
-    // Uma consulta = um snapshot PostgreSQL. SUM(numeric) e subtracao ficam exatos
-    // mesmo se creditos acumulados ultrapassarem o limite de uma unica carteira.
     const rows = await this.em.execute<Array<{
       walletId: string; currency: string; stored: string; calculated: string;
       difference: string; consistent: boolean; checkedEntries: number;

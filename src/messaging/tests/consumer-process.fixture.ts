@@ -13,6 +13,6 @@ try {
   if (!message) throw new Error("Expected message");
   await consumer.process(message);
   console.log(JSON.stringify({ committed: true, receipt: message.ReceiptHandle }));
-  await Bun.stdin.text(); // O teste mata o processo aqui, antes do ack.
+  await Bun.stdin.text();
   await consumer.acknowledge(message);
 } finally { await orm.close(); client.destroy(); }

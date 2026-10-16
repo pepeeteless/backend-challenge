@@ -29,7 +29,6 @@ export class ReferenceRetryWorker implements OnApplicationBootstrap, BeforeAppli
       try {
         await new ProcessTransaction(this.database.createEntityManager()).retryPending(id, now);
       } catch {
-        // Falha de infraestrutura nao e rejeicao financeira; rollback preserva o retry.
         this.logFailure(id);
       }
     }

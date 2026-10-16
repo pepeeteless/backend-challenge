@@ -28,7 +28,7 @@ export class MessagingWorker implements OnApplicationBootstrap, BeforeApplicatio
     this.schedule(async () => {
       const queues = await this.getQueues();
       const publisher = new OutboxPublisher(this.database.createEntityManager(), this.client, queues.events);
-      for (let i = 0; i < 20 && !this.stopping && await publisher.publishOnce(); i++) { /* lote limitado */ }
+      for (let i = 0; i < 20 && !this.stopping && await publisher.publishOnce(); i++) {  }
     });
   }
   private schedule(work: () => Promise<void>) {

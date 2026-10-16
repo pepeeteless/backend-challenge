@@ -1,4 +1,3 @@
-// Contadores operacionais por processo; nunca usados para garantias financeiras.
 export const reconciliationMetrics = {
   checks: 0,
   divergences: 0,

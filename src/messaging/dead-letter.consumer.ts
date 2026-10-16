@@ -19,8 +19,6 @@ export class DeadLetterConsumer {
       try {
         const envelope = parseWagerEnvelope(message.Body);
         const { idempotencyKey, ...body } = envelope.data;
-        // A transacao aninhada usa savepoint: conflito reverte a reserva de inbox,
-        // mas permite arquivar a mensagem invalida na transacao externa.
         const result = await new ProcessTransaction(em).recordFailure(body, idempotencyKey, {
           consumerName: "wager-transactions", messageId: envelope.messageId,
         });
@@ -29,7 +27,7 @@ export class DeadLetterConsumer {
       } catch (error) {
         if (error instanceof WagerRequestError) outcome = error.code;
         else if (error instanceof InboxConflictError) outcome = "INBOX_PAYLOAD_CONFLICT";
-        else throw error; // Banco/outbox indisponivel: nao confirmar nem descartar a DLQ.
+        else throw error;
       }
       const record = { messageId: message.MessageId!, queueUrl: this.queueUrl, body: message.Body ?? "",
         outcome, transactionId, archivedAt: new Date() };
@@ -44,7 +42,6 @@ export class DeadLetterConsumer {
     const message = result.Messages?.[0];
     if (!message) return false;
     const archived = await this.archive(message);
-    // Remocao apenas depois do commit da auditoria + FAILED/inbox/outbox quando aplicavel.
     await this.client.send(new DeleteMessageCommand({ QueueUrl: this.queueUrl, ReceiptHandle: message.ReceiptHandle }));
     logEvent("dead_letter_archived", { messageId: message.MessageId, transactionId: archived.transactionId, status: archived.outcome });
     return true;

@@ -13,7 +13,6 @@ export interface LogFields {
 }
 
 export function logEvent(event: string, fields: LogFields = {}, level: "info" | "error" = "info") {
-  // Lista explicita: nunca serializar Error, request, headers ou payload financeiro.
   const safe: Record<string, unknown> = {};
   for (const key of ["correlationId", "messageId", "transactionId", "walletId", "providerId", "eventId", "code", "status"] as const) {
     const value = fields[key];

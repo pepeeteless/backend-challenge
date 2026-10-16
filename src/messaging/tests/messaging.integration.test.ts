@@ -99,7 +99,7 @@ test("HTTP e SQS compartilham idempotencia; redelivery usa inbox persistente", a
   expect(await orm.em.fork().count(InboxSchema, { messageId: envelope.messageId })).toBe(1);
   const saved = await orm.em.fork().findOneOrFail(InboxSchema, { messageId: envelope.messageId });
   expect(saved.response?.transactionId).toBe(original.transactionId);
-  expect(await orm.em.fork().count(OutboxSchema, { aggregateId: input.walletId })).toBe(4); // abertura + BET
+  expect(await orm.em.fork().count(OutboxSchema, { aggregateId: input.walletId })).toBe(4);
   await assertConsistent(input.walletId, "20.00");
 });
 
@@ -147,7 +147,7 @@ test("dois publishers publicam outbox confirmada; evento publicado nao volta a s
   const count = await orm.em.fork().count(OutboxSchema, { publishedAt: null });
   const publish = async () => {
     const worker = new OutboxPublisher(orm.em.fork(), client, queues.events);
-    while (await worker.publishOnce()) { /* drena o banco isolado */ }
+    while (await worker.publishOnce()) {  }
   };
   await Promise.all([publish(), publish()]);
   expect(await orm.em.fork().count(OutboxSchema, { publishedAt: null })).toBe(0);
@@ -180,7 +180,6 @@ test("DLQ arquiva mensagem e FAILED com inbox/outbox, sem saldo ou ledger novos"
   expect(await orm.em.fork().count(OutboxSchema, { aggregateId: input.walletId })).toBe(3);
   expect(await orm.em.fork().count(OutboxSchema, { aggregateId: input.walletId, eventType: "WagerTransactionFailed" })).toBe(1);
   await assertConsistent(input.walletId, "100.00");
-  // Outra operacao muda o saldo; replay da falha ainda devolve o saldo original.
   await new ProcessTransaction(orm.em.fork()).execute({ ...input, externalTransactionId: crypto.randomUUID(), money: { amount: "1.00", currency: "BRL" } }, crypto.randomUUID());
   expect(await new ProcessTransaction(orm.em.fork()).execute(input, key)).toMatchObject({ status: "FAILED", idempotentReplay: true, balance: { amount: "100.00" } });
   await expect(orm.em.fork().nativeDelete(DeadLetterSchema, { messageId: archive.messageId })).rejects.toThrow("immutable");
@@ -268,7 +267,6 @@ test("DLQ invalida e conflito sao arquivados sem inventar ou alterar transacoes"
 });
 
 test("falha de publicacao agenda backoff sem perder o evento", async () => {
-  // A outbox e compartilhada: publique eventos anteriores antes desta fixture.
   const drain = new OutboxPublisher(orm.em.fork(), client, queues.events);
   while (await drain.publishOnce()) {}
   const { input } = await fixture();
@@ -303,7 +301,6 @@ test("worker morto depois do commit e antes do ack: reinicio nao debita novament
     child.kill(9);
     await child.exited;
     await assertConsistent(input.walletId, "20.00");
-    // Simula expiracao da visibilidade sem aguardar 30s; a mensagem nunca recebeu ack.
     await client.send(new ChangeMessageVisibilityCommand({ QueueUrl: queues.transactions, ReceiptHandle: receipt, VisibilityTimeout: 0 }));
     await consumer().consumeOnce();
     expect(await orm.em.fork().count(InboxSchema, { messageId: envelope.messageId })).toBe(1);
@@ -318,7 +315,6 @@ test("erro transitorio tem backoff e vai para DLQ na quinta tentativa", async ()
   const beforeRetries = retryCount();
   const { input, envelope } = await fixture();
   await sendJson(client, queues.transactions, envelope, input.walletId, crypto.randomUUID());
-  // Constraint temporaria injeta falha real de persistencia, sem mockar banco ou broker.
   await orm.em.fork().execute(`ALTER TABLE outbox_messages ADD CONSTRAINT injected_retry CHECK (aggregate_id <> '${input.walletId}') NOT VALID`);
   try {
     for (let attempt = 1; attempt <= 5; attempt++) {
@@ -354,7 +350,7 @@ test("LOSS emite somente processamento; referencia pendente emite pendencia e de
   const result = await new ProcessTransaction(orm.em.fork()).execute(pending, pending.externalTransactionId);
   for (let i = 1; i <= 9; i++) await new ProcessTransaction(orm.em.fork()).retryPending(result.transactionId, new Date(Date.now() + i * 120000));
   const events = await orm.em.fork().find(OutboxSchema, { aggregateId: input.walletId });
-  expect(events.filter(e => e.eventType === "WalletBalanceChanged")).toHaveLength(1); // apenas abertura
+  expect(events.filter(e => e.eventType === "WalletBalanceChanged")).toHaveLength(1);
   expect(events.filter(e => e.eventType === "WagerTransactionProcessed")).toHaveLength(2);
   expect(events.filter(e => e.eventType === "WagerTransactionPendingReference")).toHaveLength(1);
   expect(events.filter(e => e.eventType === "WagerTransactionRejected")).toHaveLength(1);
@@ -362,7 +358,6 @@ test("LOSS emite somente processamento; referencia pendente emite pendencia e de
 });
 
 test("envio confirmado com rollback da marcacao pode republicar; consumidor deduplica por eventId", async () => {
-  // Isola a fila de saida para nao depender dos eventos de outros testes.
   const isolated = await setupQueues(client, `${dbName}-r`);
   try {
     await fixture();
@@ -371,7 +366,6 @@ test("envio confirmado com rollback da marcacao pode republicar; consumidor dedu
     try {
       await new OutboxPublisher(em, client, isolated.events).publishOnce();
     } finally { await em.rollback(); }
-    // O broker recebeu, mas publishedAt nao foi confirmado: mesma janela de falha de uma queda.
     const received = await client.send(new ReceiveMessageCommand({ QueueUrl: isolated.events, WaitTimeSeconds: 1 }));
     const event = JSON.parse(received.Messages![0]!.Body!);
     const pending = await orm.em.fork().findOneOrFail(OutboxSchema, { id: event.eventId });
@@ -380,8 +374,6 @@ test("envio confirmado com rollback da marcacao pode republicar; consumidor dedu
     expect((await orm.em.fork().findOneOrFail(OutboxSchema, { id: event.eventId })).publishedAt).not.toBeNull();
     await client.send(new DeleteMessageCommand({ QueueUrl: isolated.events, ReceiptHandle: received.Messages![0]!.ReceiptHandle }));
 
-    // Contrato de consumidor downstream de exemplo: unicidade persistente do eventId.
-    // IDs de transporte distintos forcam duas publicacoes, sem esperar a janela FIFO de 5min.
     await orm.em.fork().execute("CREATE TABLE example_event_receipts (event_id uuid PRIMARY KEY, payload jsonb NOT NULL)");
     for (let i = 0; i < 2; i++) {
       await sendJson(client, isolated.events, event, event.aggregateId, crypto.randomUUID());
@@ -389,7 +381,6 @@ test("envio confirmado com rollback da marcacao pode republicar; consumidor dedu
       const body = JSON.parse(result.Messages![0]!.Body!);
       await orm.em.fork().transactional(async tx => {
         await tx.execute("INSERT INTO example_event_receipts VALUES (?, ?::jsonb) ON CONFLICT DO NOTHING", [body.eventId, JSON.stringify(body)]);
-        // Efeitos de negocio de um consumidor devem ocorrer aqui, apenas se o INSERT inserir.
       });
       await client.send(new DeleteMessageCommand({ QueueUrl: isolated.events, ReceiptHandle: result.Messages![0]!.ReceiptHandle }));
     }

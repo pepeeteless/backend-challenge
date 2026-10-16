@@ -63,7 +63,6 @@ function canonicalJson(value: unknown): string {
       .map((key) => `${JSON.stringify(key)}:${canonicalJson(object[key])}`)
       .join(",")}}`;
   }
-  // TransactionInput contem apenas objetos e strings; nao inclui metadados HTTP/SQS.
   return JSON.stringify(value);
 }
 

@@ -2,7 +2,6 @@ import { Migration } from "@mikro-orm/migrations";
 
 export class Migration202610160004 extends Migration {
   override async up(): Promise<void> {
-    // Metadado de ordenacao: nao modifica valores, direcao ou identidade do ledger.
     this.addSql("ALTER TABLE wallet_ledger_entries ADD COLUMN sequence bigserial NOT NULL;");
     this.addSql("CREATE UNIQUE INDEX ledger_wallet_sequence ON wallet_ledger_entries(wallet_id, sequence);");
   }

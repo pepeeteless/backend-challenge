@@ -148,7 +148,6 @@ test("soma historica maior que limite monetario nao perde precisao", async () =>
 test("divergencia e sinalizada, logada e contabilizada sem corrigir saldo", async () => {
   const wallet = await open();
   await execute(input(wallet, "BET", "80.00"));
-  // Corrupcao administrativa deliberada apenas neste banco descartavel.
   await orm.em.fork().nativeUpdate(WalletSchema, { id: wallet.id }, { balance: "19.99" });
   const before = reconciliationMetrics.divergences;
   const log = spyOn(console, "error").mockImplementation(() => {});

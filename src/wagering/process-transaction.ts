@@ -40,7 +40,6 @@ export class ProcessTransaction {
     } finally { operationalMetrics.observe(message ? "sqs" : "http", (performance.now() - start) / 1000); }
   }
 
-  // Entrada interna da auditoria da DLQ; nao e uma opcao exposta pelo HTTP.
   async recordFailure(body: unknown, key: unknown, message: MessageContext): Promise<TransactionResult> {
     return this.executeTransaction(body, key, message, true);
   }
@@ -112,14 +111,12 @@ export class ProcessTransaction {
       const candidate = await transactions.findById(id);
       if (!candidate || candidate.status !== "PENDING_REFERENCE") return null;
 
-      // Mesma ordem de locks da entrada HTTP: primeiro wallet, depois releitura.
       const wallet = await new WalletRepository(em).findForUpdate(candidate.walletId);
       if (!wallet) throw new Error("Pending transaction wallet is missing");
       const current = await transactions.findById(id);
       if (!current || current.status !== "PENDING_REFERENCE"
         || !current.nextReferenceAttemptAt || current.nextReferenceAttemptAt > now) return null;
 
-      // Outra instancia pode ter concluido enquanto esperavamos pelo lock.
       return this.applyAndSave(em, wallet, transactions.rehydrate(current), current.referenceAttempts, now);
     });
   }
@@ -163,7 +160,6 @@ export class ProcessTransaction {
     const context = { aggregateId: wallet.id, correlationId: identity.id, causationId, occurredAt: now };
     const data = { transactionId: identity.id, walletId: wallet.id, kind: identity.kind,
       status, money: identity.money.toJSON(), ...(transaction.failureCode ? { failureCode: transaction.failureCode } : {}) };
-    // Reavaliacoes ainda pendentes nao produzem repetidamente o mesmo evento.
     if (status === "PROCESSED") await messages.enqueue(WagerTransactionProcessed.create(data, context));
     if (status === "REJECTED") await messages.enqueue(WagerTransactionRejected.create(data, context));
     if (status === "PENDING_REFERENCE" && attempts === 1) {

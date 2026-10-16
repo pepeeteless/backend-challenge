@@ -1,7 +1,6 @@
 import { MikroORM } from "@mikro-orm/postgresql";
 import config from "../src/database/orm.config";
 
-// Credenciais apenas do Compose local. Execute como dono do schema, apos migrations.
 const orm = await MikroORM.init(config);
 try {
   await orm.em.transactional(async em => {
