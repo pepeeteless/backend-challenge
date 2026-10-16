@@ -5,7 +5,7 @@ import { AppModule } from "../app.module";
 import { DatabaseService } from "../database/database.service";
 import { WalletSchema } from "./wallet.schema";
 
-test("HTTP rejeita valores inválidos sem criar carteira", async () => {
+test("HTTP rejeita valores inválidos e distingue consultas inválidas de carteiras ausentes", async () => {
   const app = await NestFactory.create(AppModule, {
     logger: false,
     abortOnError: false,
@@ -15,6 +15,20 @@ test("HTTP rejeita valores inválidos sem criar carteira", async () => {
     await app.listen(0, "127.0.0.1");
 
     const url = await app.getUrl();
+
+    const invalidIdResponse = await fetch(`${url}/wallets/abc`);
+    expect(invalidIdResponse.status).toBe(400);
+
+    const missingWalletId = crypto.randomUUID();
+    const missingWalletResponse = await fetch(
+      `${url}/wallets/${missingWalletId}`,
+    );
+
+    expect(missingWalletResponse.status).toBe(404);
+    expect(await missingWalletResponse.json()).toMatchObject({
+      code: "WALLET_NOT_FOUND",
+    });
+
     const playerId = crypto.randomUUID();
 
     const invalidAmounts = [100, "-10.00", "1.999", "1e2"];

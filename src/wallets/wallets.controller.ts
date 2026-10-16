@@ -7,10 +7,15 @@ import {
   Controller,
   Inject,
   Post,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  NotFoundException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { OpenWallet } from "./open-wallet";
 import { UniqueConstraintViolationException } from "@mikro-orm/core";
+import { WalletSchema } from "./wallet.schema";
 
 const inputSchema = z.object({
   playerId: z.string().uuid(),
@@ -71,5 +76,28 @@ export class WalletsController {
 
       throw error;
     }
+  }
+
+  @Get(":walletId")
+  async findOne(@Param("walletId", new ParseUUIDPipe()) walletId: string) {
+    const em = this.database.createEntityManager();
+    const record = await em.findOne(WalletSchema, { id: walletId });
+
+    if (!record) {
+      throw new NotFoundException({
+        code: "WALLET_NOT_FOUND",
+        message: "Wallet not found",
+      });
+    }
+
+    return {
+      id: record.id,
+      playerId: record.playerId,
+      balance: {
+        amount: record.balance,
+        currency: record.currency,
+      },
+      version: record.version,
+    };
   }
 }
