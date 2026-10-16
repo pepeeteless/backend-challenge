@@ -1,7 +1,7 @@
 import { defineConfig } from "@mikro-orm/postgresql";
-import { WalletSchema } from "../wallets/wallet.schema";
-import { WalletLedgerEntrySchema } from "../wallets/wallet-ledger-entry.schema";
-import { WagerTransactionSchema } from "../wagering/wager-transaction.schema";
+import { WalletSchema } from "../wallets/schemas/wallet.schema";
+import { WalletLedgerEntrySchema } from "../wallets/schemas/wallet-ledger-entry.schema";
+import { WagerTransactionSchema } from "../wagering/schemas/wager-transaction.schema";
 import { Migrator } from "@mikro-orm/migrations";
 import { Migration202610140001 } from "./migrations/Migration202610140001";
 import { Migration202610140002 } from "./migrations/Migration202610140002";
@@ -11,8 +11,8 @@ import { Migration202610160002 } from "./migrations/Migration202610160002";
 import { Migration202610160003 } from "./migrations/Migration202610160003";
 import { Migration202610160004 } from "./migrations/Migration202610160004";
 import { Migration202610160005 } from "./migrations/Migration202610160005";
-import { DeadLetterSchema } from "../messaging/dead-letter.schema";
-import { InboxSchema, OutboxSchema } from "../messaging/message.schema";
+import { DeadLetterSchema } from "../messaging/schemas/dead-letter.schema";
+import { InboxSchema, OutboxSchema } from "../messaging/schemas/message.schema";
 
 export default defineConfig({
   host: process.env.DB_HOST ?? "127.0.0.1",

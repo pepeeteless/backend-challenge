@@ -1,7 +1,7 @@
 import { Inject, Injectable, type OnApplicationShutdown } from "@nestjs/common";
 import { GetQueueAttributesCommand } from "@aws-sdk/client-sqs";
 import { DatabaseService } from "../database/database.service";
-import { createSqsClient, findQueues } from "../messaging/sqs";
+import { createSqsClient, findQueues } from "../messaging/transport/sqs";
 
 @Injectable()
 export class ReadinessService implements OnApplicationShutdown {

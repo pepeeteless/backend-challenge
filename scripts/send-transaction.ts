@@ -1,8 +1,8 @@
-import { createSqsClient, findQueues, sendJson } from "../src/messaging/sqs";
+import { createSqsClient, findQueues, sendJson } from "../src/messaging/transport/sqs";
 import {
   transactionInputSchema,
   idempotencyKeySchema,
-} from "../src/wagering/transaction-input";
+} from "../src/wagering/contracts/transaction-input";
 const path = process.argv[2];
 if (!path) throw new Error("Uso: bun run sqs:send caminho-do-envelope.json");
 const envelope = JSON.parse(

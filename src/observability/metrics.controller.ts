@@ -4,15 +4,15 @@ import { Controller, Get, Header, Inject, UseFilters } from "@nestjs/common";
 import { raw } from "@mikro-orm/core";
 import { reconciliationMetrics, operationalMetrics } from "./metrics";
 import { DatabaseService } from "../database/database.service";
-import { DatabaseHttpFilter } from "../database/database-http.filter";
-import { WagerTransactionSchema } from "../wagering/wager-transaction.schema";
-import { OutboxSchema } from "../messaging/message.schema";
+import { DatabaseHttpFilter } from "../database/filters/database-http.filter";
+import { WagerTransactionSchema } from "../wagering/schemas/wager-transaction.schema";
+import { OutboxSchema } from "../messaging/schemas/message.schema";
 import {
   GetQueueUrlCommand,
   GetQueueAttributesCommand,
 } from "@aws-sdk/client-sqs";
-import { createSqsClient, queueNames } from "../messaging/sqs";
-import { DeadLetterSchema } from "../messaging/dead-letter.schema";
+import { createSqsClient, queueNames } from "../messaging/transport/sqs";
+import { DeadLetterSchema } from "../messaging/schemas/dead-letter.schema";
 
 @Controller("metrics")
 @UseFilters(DatabaseHttpFilter)

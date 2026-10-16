@@ -1,5 +1,5 @@
 import { MikroORM } from "@mikro-orm/postgresql";
-import { WalletSchema } from "../src/wallets/wallet.schema";
+import { WalletSchema } from "../src/wallets/schemas/wallet.schema";
 import config from "../src/database/orm.config";
 
 async function main(): Promise<void> {
